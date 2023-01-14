@@ -8,7 +8,8 @@ def move_object_to_right():
     function f(x) = y = -a * x ** 2 + k
     :return:
     """
-    global x, a, h, final_poz, fruit, fruit_image_l, y, condition, fruit_image, bomb, bomb_status
+    global x, a, h, final_poz, fruit, fruit_image_l, y, condition, fruit_image, bomb, bomb_status, heart_l_x, \
+        heart_l_y, heart_r_x, heart_r_y, lives
 
     y = -a * x ** 2 + h
     if y > -100 and condition == "whole":
@@ -19,7 +20,7 @@ def move_object_to_right():
         else:
             x -= 10
         root.after(18, move_object_to_right)
-    elif condition == "whole":
+    elif condition == "whole" and bomb:
         x = -random.choice([item for item in range(-500, -300)] + [item for item in range(300, 500)])
         y = 1000
         final_poz = -x
@@ -36,6 +37,17 @@ def move_object_to_right():
         fruit = tk.Label(root, image=fruit_image, bg="#DA990F")
         fruit.place_configure(x=int(x) + 400, y=1000)
         root.after(10, move_object_to_right)
+    elif condition == "whole":
+        lives -= 1
+        root.title(f"YOUR SCORE: {score}        YOUR LIVES: {'❤' * lives}")
+        heart_left.place(y=50, x=400)
+        heart_right.place(y=60, x=500)
+        heart_l_x = -100
+        heart_l_y = 950
+        heart_r_x = 0
+        heart_r_y = 960
+
+        lose_heart_animation()
 
 
 def half_fruit_falling():
@@ -188,7 +200,8 @@ def boom_lv_6():
 
 def lose_heart_animation():
     global heart_left, heart_right, heart_l_x, heart_l_y, heart_r_x, heart_r_y, condition, x, y, fruit_bot, fruit_top, \
-        final_poz, h, a, condition, x_r, fruit, fruit_image, bomb, bomb_status, lives
+        final_poz, h, a, condition, x_r, fruit, fruit_image, bomb, bomb_status, lives, score
+    condition = "cut"
     if heart_r_x < 320:
         heart_r_x += 10
         heart_r_y = -0.01 * (heart_r_x ** 2) + 960
@@ -216,15 +229,67 @@ def lose_heart_animation():
             fruit.place_configure(x=int(x) + 400, y=1000)
             root.after(10, move_object_to_right)
         else:
+            restart_menu = tk.Label(root, image=game_over_image, bg="#DA990F")
+            restart_menu.place(x=200, y=200)
+            game_over_button = tk.Button(root, image=restart_button_image, borderwidth=0, bg="#99212A",
+                         command=lambda: [game_over_button.destroy(), start_game(),
+                                          restart_menu.destroy(), exit_button.destroy(), score_label.destroy()])
+            game_over_button.place(x=350, y=480)
+            exit_button = tk.Button(root, image=exit_button_image, borderwidth=0, bg="#99212A", command=exit)
+            exit_button.place(x=350, y=580)
+            score_label = tk.Label(root, text=f"SCORE: {score}", borderwidth=0, bg="#99212A", fg='#FBC712',
+                             font='Helvetica 20 bold')
+            score_label.place(x=440, y=440)
+
             print("game over")
+
+
 def start_game():
-    global game_stage
+    global game_stage, lives, heart_left, heart_right, heart_l_x, heart_l_y, heart_r_x, heart_r_y, condition, x, y, \
+        fruit_bot, fruit_top, final_poz, h, a, condition, x_r, fruit, fruit_image, bomb, bomb_status, lives, \
+        explosion, score
+    lives = 3
     root.bind('<Enter>', label_hover)
+    game_stage = 'menu'
+    score = 0
+
+    # 1st fruit
+    x_r = 0
+    y = 1000
+    fruit_image = random.choice(fruit_image_l)
+    if fruit_image == bomb_image:
+        bomb = True
+        bomb_status = 'start'
+    else:
+        bomb = False
+    x = -random.choice([item for item in range(-500, -300)] + [item for item in range(300, 500)])
+    final_poz = -x
+    h = random.choice(range(800, 1000))
+    a = h / (x ** 2)
+    condition = 'whole'
+    heart_l_x = -100
+    heart_l_y = 950
+    heart_r_x = 0
+    heart_r_y = 960
+    lives = 3
+    root.title(f"YOUR SCORE: {score}        YOUR LIVES: {'❤' * lives}")
+
+    fruit = tk.Label(root, image=fruit_image, bg="#DA990F")
+    fruit_top = tk.Label(root, image=get_image(fruit_image)[0], bg="#DA990F", borderwidth=0)
+    fruit_bot = tk.Label(root, image=get_image(fruit_image)[1], bg="#DA990F", borderwidth=0)
+    explosion = tk.Label(root, image=explosion_lv_2, borderwidth=0)
+    heart_left = tk.Label(root, image=heart_left_image, borderwidth=0)
+    heart_right = tk.Label(root, image=heart_right_image, borderwidth=0)
+    fruit.place(x=300, y=1000)
+
+
+    move_object_to_right()
 
 
 root = tk.Tk()
 root.geometry("1000x1000")
 root.configure(bg="#DA990F")
+root.resizable(False, False)
 
 
 main_path = os.getcwd()
@@ -247,6 +312,11 @@ explosion_lv_3 = tk.PhotoImage(file="explosion_lv_3.png")
 explosion_lv_4 = tk.PhotoImage(file="explosion_lv_4.png")
 explosion_lv_5 = tk.PhotoImage(file="explosion_lv_5.png")
 explosion_lv_6 = tk.PhotoImage(file="explosion_lv_6.png")
+start_button_image = tk.PhotoImage(file="start_button.png")
+restart_button_image = tk.PhotoImage(file="restart_button.png")
+exit_button_image = tk.PhotoImage(file="exit_button.png")
+game_over_image = tk.PhotoImage(file="game_over_menu.png")
+start_menu_image = tk.PhotoImage(file="start_menu.png")
 os.chdir(main_path)
 
 
@@ -285,13 +355,16 @@ heart_left = tk.Label(root, image=heart_left_image, borderwidth=0)
 heart_right = tk.Label(root, image=heart_right_image, borderwidth=0)
 fruit.place(x=300, y=1000)
 
-fruit_2 = tk.Label(root, image=watermelon_image, bg="#DA990F")
-fruit_2.place(x=300, y=1000)
+start_menu = tk.Label(root, image=start_menu_image, bg="#DA990F")
+start_menu.place(x=200, y=200)
 
+start_button = tk.Button(root, image=start_button_image, borderwidth=0, bg="#99212A",
+                         command=lambda: [start_button.destroy(), start_game(),
+                                          start_menu.destroy(), exit_button.destroy()])
+start_button.place(x=350, y=480)
 
-button = tk.Button(root, text="press", command=lambda: [move_object_to_right(), button.destroy(), start_game()])
-button.place(x=100, y=100)
-
+exit_button = tk.Button(root, image=exit_button_image, borderwidth=0, bg="#99212A", command=exit)
+exit_button.place(x=350, y=580)
 
 
 
